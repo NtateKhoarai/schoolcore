@@ -1,30 +1,35 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from app.database import SessionLocal
 from app.models.user import User
-from app.auth.auth import create_token
+from app.auth.auth import create_token, verify_password
 
 router = APIRouter()
+
 
 @router.post("/login")
 def login(username: str, password: str):
 
     db = SessionLocal()
 
-    user = db.query(User).filter(User.username == username).first()
+    try:
+        user = db.query(User).filter(User.username == username).first()
 
-    if not user:
-        return {"error": "User not found"}
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    if password != user.password:
-        return {"error": "Invalid password"}
+        if not verify_password(password, user.password):
+            raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_token({
-        "user": user.username,
-        "role": user.role
-    })
+        token = create_token({
+            "user": user.username,
+            "role": user.role
+        })
 
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "role": user.role
-    }
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "role": user.role
+        }
+
+    finally:
+        db.close()

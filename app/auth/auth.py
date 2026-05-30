@@ -61,3 +61,16 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="Invalid token")
 
     return user
+def require_role(required_role: str):
+
+    def role_checker(user=Depends(get_current_user)):
+
+        if user.get("role") != required_role:
+            raise HTTPException(
+                status_code=403,
+                detail="You are not allowed to perform this action"
+            )
+
+        return user
+
+    return role_checker

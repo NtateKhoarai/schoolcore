@@ -1,20 +1,14 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter
 from app.database import SessionLocal
 from app.models.student import Student
 from app.schemas.student import StudentCreate
-from app.auth.auth import get_current_user
 from sqlalchemy.exc import IntegrityError
-
 
 router = APIRouter()
 
 
 @router.post("/students")
-def create_student(
-    student: StudentCreate,
-    user=Depends(get_current_user)
-):
+def create_student(student: StudentCreate):
 
     db = SessionLocal()
 
@@ -43,8 +37,9 @@ def create_student(
             "error": "Student ID already exists"
         }
 
+
 @router.get("/students")
-def get_students(user=Depends(get_current_user)):
+def get_students():
 
     db = SessionLocal()
 
@@ -57,7 +52,6 @@ def get_students(user=Depends(get_current_user)):
 def update_student(
     student_id: str,
     updated_data: StudentCreate,
-    user=Depends(get_current_user)
 ):
 
     db = SessionLocal()
@@ -82,10 +76,7 @@ def update_student(
 
 
 @router.delete("/students/{student_id}")
-def delete_student(
-    student_id: str,
-    user=Depends(get_current_user)
-):
+def delete_student(student_id: str):
 
     db = SessionLocal()
 

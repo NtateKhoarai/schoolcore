@@ -3,6 +3,7 @@ from app.database import SessionLocal
 from app.models.attendance import Attendance
 from app.schemas.attendance import AttendanceCreate
 from app.auth.auth import get_current_user
+from app.auth.auth import require_role
 
 router = APIRouter()
 
@@ -10,7 +11,7 @@ router = APIRouter()
 @router.post("/attendance")
 def mark_attendance(
     attendance: AttendanceCreate,
-    user=Depends(get_current_user)
+    user=Depends(require_role("teacher"))
 ):
 
     db = SessionLocal()
