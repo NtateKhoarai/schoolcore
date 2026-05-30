@@ -1,26 +1,42 @@
 const BASE_URL = "http://127.0.0.1:8000";
 
-/*
-IMPORTANT:
-Replace this with a REAL token after login.
-If empty → backend 401 errors will happen.
-*/
-const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3ODAxNjI4OTR9.IGVmbXD3KoIjHnS57OrfOchGxN_1iEuQWtVCCZvA9iw"
-const headers = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${TOKEN}`,
-};
+/* ================= TOKEN ================= */
+// IMPORTANT: later we will move this to login system
+export function getToken() {
+  return localStorage.getItem("token");
+}
+
+/* ================= HEADERS ================= */
+function authHeaders() {
+  const token = getToken();
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: token ? `Bearer ${token}` : "",
+  };
+}
+
+/* ================= ERROR HANDLER ================= */
+async function handleResponse(res) {
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(data?.detail || "Request failed");
+  }
+
+  return data;
+}
 
 /* ================= STUDENTS ================= */
 
 export async function getAllStudents() {
-  const res = await fetch(`${BASE_URL}/students`, { headers });
-  if (!res.ok) throw new Error("Failed to fetch students");
-  return res.json();
+  const res = await fetch(`${BASE_URL}/students`, {
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
 }
 
 export async function getStudentById(studentId) {
-  // Backend does NOT have GET /students/{id}
   const students = await getAllStudents();
   return students.find((s) => s.student_id === studentId) || null;
 }
@@ -28,85 +44,73 @@ export async function getStudentById(studentId) {
 export async function createStudent(data) {
   const res = await fetch(`${BASE_URL}/students`, {
     method: "POST",
-    headers,
+    headers: authHeaders(),
     body: JSON.stringify(data),
   });
-
-  if (!res.ok) throw new Error("Failed to create student");
-  return res.json();
+  return handleResponse(res);
 }
 
 export async function updateStudent(id, data) {
   const res = await fetch(`${BASE_URL}/students/${id}`, {
     method: "PUT",
-    headers,
+    headers: authHeaders(),
     body: JSON.stringify(data),
   });
-
-  if (!res.ok) throw new Error("Failed to update student");
-  return res.json();
+  return handleResponse(res);
 }
 
 export async function deleteStudent(id) {
   const res = await fetch(`${BASE_URL}/students/${id}`, {
     method: "DELETE",
-    headers,
+    headers: authHeaders(),
   });
-
-  if (!res.ok) throw new Error("Failed to delete student");
-  return res.json();
+  return handleResponse(res);
 }
 
 export async function downloadStudentReport(id) {
   const res = await fetch(`${BASE_URL}/report/student/${id}`, {
-    headers,
+    headers: authHeaders(),
   });
 
-  if (!res.ok) throw new Error("Failed to download report");
+  if (!res.ok) throw new Error("Failed report download");
   return res.blob();
 }
 
 /* ================= TEACHERS ================= */
 
 export async function getAllTeachers() {
-  const res = await fetch(`${BASE_URL}/teachers`, { headers });
+  const res = await fetch(`${BASE_URL}/teachers`, {
+    headers: authHeaders(),
+  });
 
-  if (!res.ok) {
-    const msg = await res.text();
-    throw new Error(msg);
-  }
-
-  return res.json();
+  return handleResponse(res);
 }
 
 export async function createTeacher(data) {
   const res = await fetch(`${BASE_URL}/teachers`, {
     method: "POST",
-    headers,
+    headers: authHeaders(),
     body: JSON.stringify(data),
   });
 
-  if (!res.ok) throw new Error("Failed to create teacher");
-  return res.json();
+  return handleResponse(res);
 }
 
 export async function updateTeacher(id, data) {
   const res = await fetch(`${BASE_URL}/teachers/${id}`, {
     method: "PUT",
-    headers,
+    headers: authHeaders(),
     body: JSON.stringify(data),
   });
 
-  if (!res.ok) throw new Error("Failed to update teacher");
-  return res.json();
+  return handleResponse(res);
 }
 
 export async function deleteTeacher(id) {
   const res = await fetch(`${BASE_URL}/teachers/${id}`, {
     method: "DELETE",
-    headers,
+    headers: authHeaders(),
   });
 
-  if (!res.ok) throw new Error("Failed to delete teacher");
-  return res.json();
+  return handleResponse(res);
 }
