@@ -1,5 +1,5 @@
 import StudentSearch from "./components/StudentSearch";
-import StudentsTable from "./components/StudentsTable.jsx";
+import StudentsTable from "./components/StudentsTable";
 
 function App() {
   return (

@@ -1,9 +1,6 @@
 import { useState } from "react";
-import {
-  getStudentById,
-  downloadStudentReport,
-} from "../services/api";
-
+ import { getStudentById, downloadStudentReport } from "../services/api";
+ 
 export default function StudentSearch() {
   const [studentId, setStudentId] = useState("");
   const [result, setResult] = useState(null);
