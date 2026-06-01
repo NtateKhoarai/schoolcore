@@ -3,8 +3,8 @@ import StudentSearch from "./components/StudentSearch";
 import StudentsTable from "./components/StudentsTable";
 import TeachersTable from "./components/TeachersTable";
 import Attendance from "./components/Attendance";
-import { getAllStudents, getAllTeachers } from "./services/api";
 import Reports from "./components/Reports";
+import { getAllStudents, getAllTeachers } from "./services/api";
 
 function App() {
   const [activePage, setActivePage] = useState("dashboard");
@@ -14,19 +14,17 @@ function App() {
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+    }, []);
 
   async function loadDashboardData() {
     try {
       const students = await getAllStudents();
-
       if (Array.isArray(students)) {
         setStudentCount(students.length);
       }
 
       try {
         const teachers = await getAllTeachers();
-
         if (Array.isArray(teachers)) {
           setTeacherCount(teachers.length);
         }
@@ -59,38 +57,23 @@ function App() {
       >
         <h2 style={{ marginBottom: "40px" }}>SchoolCore</h2>
 
-        <div
-          style={menuStyle}
-          onClick={() => setActivePage("dashboard")}
-        >
+        <div style={menuStyle} onClick={() => setActivePage("dashboard")}>
           📊 Dashboard
         </div>
 
-        <div
-          style={menuStyle}
-          onClick={() => setActivePage("students")}
-        >
+        <div style={menuStyle} onClick={() => setActivePage("students")}>
           👨‍🎓 Students
         </div>
 
-        <div
-          style={menuStyle}
-          onClick={() => setActivePage("teachers")}
-        >
+        <div style={menuStyle} onClick={() => setActivePage("teachers")}>
           👩‍🏫 Teachers
         </div>
 
-        <div
-          style={menuStyle}
-          onClick={() => setActivePage("attendance")}
-        >
+        <div style={menuStyle} onClick={() => setActivePage("attendance")}>
           📅 Attendance
         </div>
 
-        <div
-          style={menuStyle}
-          onClick={() => setActivePage("reports")}
-        >
+        <div style={menuStyle} onClick={() => setActivePage("reports")}>
           📑 Reports
         </div>
       </div>
@@ -109,7 +92,6 @@ function App() {
           }}
         >
           <h1 style={{ margin: 0 }}>SchoolCore Dashboard</h1>
-
           <div>
             <strong>Admin</strong>
           </div>
@@ -191,7 +173,7 @@ const cardStyle = {
   background: "white",
   padding: "20px",
   borderRadius: "10px",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
 };
 
 export default App;

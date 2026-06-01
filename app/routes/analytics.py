@@ -1,59 +1,78 @@
 from fastapi import APIRouter, Depends
-
 from app.database import SessionLocal
+from app.auth.auth import get_current_user
 from app.models.student import Student
 from app.models.teacher import Teacher
 from app.models.attendance import Attendance
 
-from app.auth.auth import get_current_user
+from sqlalchemy import func
 
 router = APIRouter()
 
 
-@router.get("/analytics/overview")
-def analytics_overview(
-    user=Depends(get_current_user)
-):
+@router.get("/analytics/dashboard")
+def dashboard_analytics(user=Depends(get_current_user)):
 
     db = SessionLocal()
 
-    try:
+    # ======================
+    # STUDENT STATS
+    # ======================
+    total_students = db.query(Student).count()
 
-        total_students = db.query(Student).count()
+    class_distribution = db.query(
+        Student.class_name,
+        func.count(Student.id)
+    ).group_by(Student.class_name).all()
 
-        total_teachers = db.query(Teacher).count()
+    gender_distribution = db.query(
+        Student.gender,
+        func.count(Student.id)
+    ).group_by(Student.gender).all()
 
-        attendance_records = db.query(Attendance).all()
 
-        total_attendance = len(attendance_records)
+    # ======================
+    # TEACHER STATS
+    # ======================
+    total_teachers = db.query(Teacher).count()
 
-        present_count = len([
-            a for a in attendance_records
-            if a.status.lower() == "present"
-        ])
+    subject_distribution = db.query(
+        Teacher.subject,
+        func.count(Teacher.id)
+    ).group_by(Teacher.subject).all()
 
-        absent_count = len([
-            a for a in attendance_records
-            if a.status.lower() == "absent"
-        ])
 
-        attendance_rate = (
-            round(
-                (present_count / total_attendance) * 100,
-                2
-            )
-            if total_attendance > 0
-            else 0
-        )
+    # ======================
+    # ATTENDANCE STATS
+    # ======================
+    total_attendance = db.query(Attendance).count()
 
-        return {
-            "total_students": total_students,
-            "total_teachers": total_teachers,
-            "total_attendance_records": total_attendance,
-            "present_count": present_count,
-            "absent_count": absent_count,
-            "attendance_rate": attendance_rate
+    present = db.query(Attendance).filter(Attendance.status == "present").count()
+    absent = db.query(Attendance).filter(Attendance.status == "absent").count()
+
+
+    attendance_rate = (
+        (present / total_attendance) * 100
+        if total_attendance > 0 else 0
+    )
+
+
+    return {
+        "students": {
+            "total": total_students,
+            "by_class": class_distribution,
+            "by_gender": gender_distribution
+        },
+
+        "teachers": {
+            "total": total_teachers,
+            "by_subject": subject_distribution
+        },
+
+        "attendance": {
+            "total": total_attendance,
+            "present": present,
+            "absent": absent,
+            "rate": round(attendance_rate, 2)
         }
-
-    finally:
-        db.close()
+    }

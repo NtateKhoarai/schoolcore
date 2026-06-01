@@ -145,3 +145,8 @@ export async function getAnalyticsOverview() {
 
   return handleResponse(res);
 }
+
+export const getAllResults = async () => {
+  const response = await api.get("/results");
+  return response.data;
+};
