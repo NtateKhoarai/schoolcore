@@ -1,47 +1,174 @@
 import { useEffect, useState } from "react";
-import { getAllStudents } from "../services/api";
+import {
+  getAttendance,
+  markAttendance,
+  getAllStudents,
+} from "../services/api";
 
 export default function Attendance() {
   const [students, setStudents] = useState([]);
+  const [records, setRecords] = useState([]);
+
+  const [form, setForm] = useState({
+    student_id: "",
+    date: new Date().toISOString().split("T")[0],
+    status: "Present",
+    remarks: "",
+  });
 
   useEffect(() => {
-    load();
+    loadData();
   }, []);
 
-  const load = async () => {
+  async function loadData() {
     try {
-      const data = await getAllStudents();
-      setStudents(Array.isArray(data) ? data : []);
+      const studentsData = await getAllStudents();
+      const attendanceData = await getAttendance();
+
+      setStudents(studentsData || []);
+      setRecords(attendanceData || []);
     } catch (err) {
-      alert("Failed to load attendance data");
+      console.error(err);
     }
-  };
+  }
+
+  async function handleSubmit() {
+    try {
+      await markAttendance(form);
+
+      alert("Attendance saved");
+
+      loadData();
+
+      setForm({
+        ...form,
+        remarks: "",
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save attendance");
+    }
+  }
 
   return (
-    <div style={{ marginTop: 30, background: "#fff", padding: 20 }}>
-      <h2>Attendance (Coming Soon)</h2>
+    <div>
+      <h2>Attendance Management</h2>
 
-      <p>This module is not connected to backend yet.</p>
+      <div
+        style={{
+          background: "white",
+          padding: 20,
+          borderRadius: 10,
+          marginBottom: 20,
+        }}
+      >
+        <h3>Mark Attendance</h3>
 
-      <table width="100%" border="1" cellPadding="8">
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Class</th>
-            <th>Status</th>
-          </tr>
-        </thead>
+        <select
+          value={form.student_id}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              student_id: e.target.value,
+            })
+          }
+        >
+          <option value="">Select Student</option>
 
-        <tbody>
           {students.map((s) => (
-            <tr key={s.student_id}>
-              <td>{s.first_name} {s.last_name}</td>
-              <td>{s.class_name}</td>
-              <td>Not Marked</td>
-            </tr>
+            <option
+              key={s.student_id}
+              value={s.student_id}
+            >
+              {s.student_id} - {s.first_name} {s.last_name}
+            </option>
           ))}
-        </tbody>
-      </table>
+        </select>
+
+        <br /><br />
+
+        <input
+          type="date"
+          value={form.date}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              date: e.target.value,
+            })
+          }
+        />
+
+        <br /><br />
+
+        <select
+          value={form.status}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              status: e.target.value,
+            })
+          }
+        >
+          <option>Present</option>
+          <option>Absent</option>
+          <option>Late</option>
+        </select>
+
+        <br /><br />
+
+        <input
+          placeholder="Remarks"
+          value={form.remarks}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              remarks: e.target.value,
+            })
+          }
+        />
+
+        <br /><br />
+
+        <button onClick={handleSubmit}>
+          Save Attendance
+        </button>
+      </div>
+
+      <div
+        style={{
+          background: "white",
+          padding: 20,
+          borderRadius: 10,
+        }}
+      >
+        <h3>Attendance Records</h3>
+
+        <table
+          border="1"
+          width="100%"
+          cellPadding="10"
+        >
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {records.map((r) => (
+              <tr key={r.id}>
+                <td>{r.student_id}</td>
+                <td>{r.date}</td>
+                <td>{r.status}</td>
+                <td>{r.remarks}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

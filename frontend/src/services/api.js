@@ -114,3 +114,34 @@ export async function deleteTeacher(id) {
 
   return handleResponse(res);
 }
+
+/* ================= ATTENDANCE ================= */
+
+export async function getAttendance() {
+  const res = await fetch(`${BASE_URL}/attendance`, {
+    headers: authHeaders(),
+  });
+
+  return handleResponse(res);
+}
+
+export async function markAttendance(data) {
+  const res = await fetch(`${BASE_URL}/attendance`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse(res);
+}
+
+export async function getAnalyticsOverview() {
+  const res = await fetch(
+    `${BASE_URL}/analytics/overview`,
+    {
+      headers: authHeaders(),
+    }
+  );
+
+  return handleResponse(res);
+}

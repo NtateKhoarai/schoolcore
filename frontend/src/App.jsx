@@ -4,6 +4,7 @@ import StudentsTable from "./components/StudentsTable";
 import TeachersTable from "./components/TeachersTable";
 import Attendance from "./components/Attendance";
 import { getAllStudents, getAllTeachers } from "./services/api";
+import Reports from "./components/Reports";
 
 function App() {
   const [activePage, setActivePage] = useState("dashboard");
@@ -15,21 +16,28 @@ function App() {
     loadDashboardData();
   }, []);
 
-  const loadDashboardData = async () => {
+  async function loadDashboardData() {
     try {
       const students = await getAllStudents();
-      setStudentCount(students.length);
+
+      if (Array.isArray(students)) {
+        setStudentCount(students.length);
+      }
 
       try {
         const teachers = await getAllTeachers();
-        setTeacherCount(teachers.length);
-      } catch {
+
+        if (Array.isArray(teachers)) {
+          setTeacherCount(teachers.length);
+        }
+      } catch (teacherError) {
+        console.log("Teachers count unavailable");
         setTeacherCount(0);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error("Dashboard load failed:", error);
     }
-  };
+  }
 
   return (
     <div
@@ -40,7 +48,7 @@ function App() {
         fontFamily: "Arial, sans-serif",
       }}
     >
-      {/* SIDEBAR */}
+      {/* Sidebar */}
       <div
         style={{
           width: "240px",
@@ -52,44 +60,44 @@ function App() {
         <h2 style={{ marginBottom: "40px" }}>SchoolCore</h2>
 
         <div
-          onClick={() => setActivePage("dashboard")}
           style={menuStyle}
+          onClick={() => setActivePage("dashboard")}
         >
           📊 Dashboard
         </div>
 
         <div
-          onClick={() => setActivePage("students")}
           style={menuStyle}
+          onClick={() => setActivePage("students")}
         >
           👨‍🎓 Students
         </div>
 
         <div
-          onClick={() => setActivePage("teachers")}
           style={menuStyle}
+          onClick={() => setActivePage("teachers")}
         >
           👩‍🏫 Teachers
         </div>
 
         <div
-          onClick={() => setActivePage("attendance")}
           style={menuStyle}
+          onClick={() => setActivePage("attendance")}
         >
           📅 Attendance
         </div>
 
         <div
-          onClick={() => setActivePage("reports")}
           style={menuStyle}
+          onClick={() => setActivePage("reports")}
         >
           📑 Reports
         </div>
       </div>
 
-      {/* MAIN CONTENT */}
+      {/* Main Content */}
       <div style={{ flex: 1 }}>
-        {/* TOP BAR */}
+        {/* Top Bar */}
         <div
           style={{
             backgroundColor: "white",
@@ -107,7 +115,7 @@ function App() {
           </div>
         </div>
 
-        {/* DASHBOARD */}
+        {/* Dashboard */}
         {activePage === "dashboard" && (
           <div
             style={{
@@ -139,7 +147,7 @@ function App() {
           </div>
         )}
 
-        {/* STUDENTS */}
+        {/* Students */}
         {activePage === "students" && (
           <div style={{ padding: "20px" }}>
             <StudentSearch />
@@ -147,25 +155,24 @@ function App() {
           </div>
         )}
 
-        {/* TEACHERS */}
+        {/* Teachers */}
         {activePage === "teachers" && (
           <div style={{ padding: "20px" }}>
             <TeachersTable />
           </div>
         )}
 
-        {/* ATTENDANCE */}
+        {/* Attendance */}
         {activePage === "attendance" && (
           <div style={{ padding: "20px" }}>
             <Attendance />
           </div>
         )}
 
-        {/* REPORTS */}
+        {/* Reports */}
         {activePage === "reports" && (
           <div style={{ padding: "20px" }}>
-            <h2>Reports</h2>
-            <p>Student reports and analytics will appear here.</p>
+            <Reports />
           </div>
         )}
       </div>

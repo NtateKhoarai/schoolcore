@@ -9,6 +9,7 @@ from app.routes.attendance import router as attendance_router
 from app.routes.teacher import router as teacher_router
 from app.routes.result import router as result_router
 from app.routes.report import router as report_router
+from app.routes.analytics import router as analytics_router
 
 from app.models.attendance import Attendance
 
@@ -36,6 +37,7 @@ app.include_router(attendance_router)
 app.include_router(teacher_router)
 app.include_router(result_router)
 app.include_router(report_router)
+app.include_router(analytics_router)
 
 @app.get("/")
 def home():

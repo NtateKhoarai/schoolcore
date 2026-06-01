@@ -11,7 +11,7 @@ router = APIRouter()
 @router.post("/attendance")
 def mark_attendance(
     attendance: AttendanceCreate,
-    user=Depends(require_role("teacher"))
+    user=Depends(get_current_user)
 ):
 
     db = SessionLocal()
