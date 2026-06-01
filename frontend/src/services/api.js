@@ -1,7 +1,6 @@
 const BASE_URL = "http://127.0.0.1:8000";
 
 /* ================= TOKEN ================= */
-// IMPORTANT: later we will move this to login system
 export function getToken() {
   return localStorage.getItem("token");
 }
@@ -28,7 +27,6 @@ async function handleResponse(res) {
 }
 
 /* ================= STUDENTS ================= */
-
 export async function getAllStudents() {
   const res = await fetch(`${BASE_URL}/students`, {
     headers: authHeaders(),
@@ -77,7 +75,6 @@ export async function downloadStudentReport(id) {
 }
 
 /* ================= TEACHERS ================= */
-
 export async function getAllTeachers() {
   const res = await fetch(`${BASE_URL}/teachers`, {
     headers: authHeaders(),
@@ -116,7 +113,6 @@ export async function deleteTeacher(id) {
 }
 
 /* ================= ATTENDANCE ================= */
-
 export async function getAttendance() {
   const res = await fetch(`${BASE_URL}/attendance`, {
     headers: authHeaders(),
@@ -135,18 +131,45 @@ export async function markAttendance(data) {
   return handleResponse(res);
 }
 
+/* ================= ANALYTICS ================= */
 export async function getAnalyticsOverview() {
-  const res = await fetch(
-    `${BASE_URL}/analytics/overview`,
-    {
-      headers: authHeaders(),
-    }
-  );
+  const res = await fetch(`${BASE_URL}/analytics/overview`, {
+    headers: authHeaders(),
+  });
 
   return handleResponse(res);
 }
 
-export const getAllResults = async () => {
-  const response = await api.get("/results");
-  return response.data;
-};
+/* ================= RESULTS ================= */
+export async function getAllResults() {
+  const res = await fetch(`${BASE_URL}/results`, {
+    headers: authHeaders(),
+  });
+
+  return handleResponse(res);
+}
+
+/* ================= AUTH ================= */
+export async function loginUser(data) {
+  const res = await fetch(`${BASE_URL}/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await handleResponse(res);
+
+  const token = result.access_token || result.token;
+
+  if (token) {
+    localStorage.setItem("token", token);
+  }
+
+  if (result.role) {
+    localStorage.setItem("role", result.role);
+  }
+
+  return result;
+}

@@ -4,6 +4,7 @@ from app.auth.auth import get_current_user
 from app.models.student import Student
 from app.models.teacher import Teacher
 from app.models.attendance import Attendance
+from app.models.result import Result
 
 from sqlalchemy import func
 

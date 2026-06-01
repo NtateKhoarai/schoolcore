@@ -12,4 +12,13 @@ SessionLocal = sessionmaker(
     bind=engine
 )
 
+from contextlib import contextmanager
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+        
 Base = declarative_base()

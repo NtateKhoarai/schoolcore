@@ -5,155 +5,127 @@ import TeachersTable from "./components/TeachersTable";
 import Attendance from "./components/Attendance";
 import Reports from "./components/Reports";
 import { getAllStudents, getAllTeachers } from "./services/api";
+import Login from "./components/Login";
 
 function App() {
+  // ================= ALL HOOKS FIRST =================
   const [activePage, setActivePage] = useState("dashboard");
-
   const [studentCount, setStudentCount] = useState(0);
   const [teacherCount, setTeacherCount] = useState(0);
 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // check login on load
+ useEffect(() => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    setAuthChecked(true);
+    return;
+  }
+
+  // decode expiry safely
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const now = Math.floor(Date.now() / 1000);
+
+    if (payload.exp < now) {
+      // token expired → clear it
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+
+      setIsLoggedIn(false);
+    } else {
+      setIsLoggedIn(true);
+    }
+  } catch (e) {
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+  }
+
+  setAuthChecked(true);
+}, []);
+
+  // load dashboard data AFTER login
   useEffect(() => {
+    if (!isLoggedIn) return;
+
     loadDashboardData();
-    }, []);
+  }, [isLoggedIn]);
 
   async function loadDashboardData() {
     try {
       const students = await getAllStudents();
-      if (Array.isArray(students)) {
-        setStudentCount(students.length);
-      }
+      if (Array.isArray(students)) setStudentCount(students.length);
 
-      try {
-        const teachers = await getAllTeachers();
-        if (Array.isArray(teachers)) {
-          setTeacherCount(teachers.length);
-        }
-      } catch (teacherError) {
-        console.log("Teachers count unavailable");
-        setTeacherCount(0);
-      }
+      const teachers = await getAllTeachers();
+      if (Array.isArray(teachers)) setTeacherCount(teachers.length);
     } catch (error) {
       console.error("Dashboard load failed:", error);
     }
   }
 
-  return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        backgroundColor: "#f4f6f9",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      {/* Sidebar */}
-      <div
-        style={{
-          width: "240px",
-          backgroundColor: "#1e3a8a",
-          color: "white",
-          padding: "20px",
+  // ================= CONDITIONAL UI AFTER HOOKS =================
+
+  if (!authChecked) {
+    return <div style={{ padding: 40 }}>Loading...</div>;
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <Login
+        onLoginSuccess={() => {
+          setIsLoggedIn(true);
         }}
-      >
-        <h2 style={{ marginBottom: "40px" }}>SchoolCore</h2>
+      />
+    );
+  }
 
-        <div style={menuStyle} onClick={() => setActivePage("dashboard")}>
-          📊 Dashboard
-        </div>
+  return (
+    <div style={{ display: "flex", minHeight: "100vh" }}>
+      {/* Sidebar */}
+      <div style={{ width: 240, backgroundColor: "#1e3a8a", color: "white", padding: 20 }}>
+        <h2>SchoolCore</h2>
 
-        <div style={menuStyle} onClick={() => setActivePage("students")}>
-          👨‍🎓 Students
-        </div>
-
-        <div style={menuStyle} onClick={() => setActivePage("teachers")}>
-          👩‍🏫 Teachers
-        </div>
-
-        <div style={menuStyle} onClick={() => setActivePage("attendance")}>
-          📅 Attendance
-        </div>
-
-        <div style={menuStyle} onClick={() => setActivePage("reports")}>
-          📑 Reports
-        </div>
+        <div onClick={() => setActivePage("dashboard")}>📊 Dashboard</div>
+        <div onClick={() => setActivePage("students")}>👨‍🎓 Students</div>
+        <div onClick={() => setActivePage("teachers")}>👩‍🏫 Teachers</div>
+        <div onClick={() => setActivePage("attendance")}>📅 Attendance</div>
+        <div onClick={() => setActivePage("reports")}>📑 Reports</div>
       </div>
 
-      {/* Main Content */}
+      {/* Main */}
       <div style={{ flex: 1 }}>
-        {/* Top Bar */}
-        <div
-          style={{
-            backgroundColor: "white",
-            padding: "20px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          }}
-        >
-          <h1 style={{ margin: 0 }}>SchoolCore Dashboard</h1>
-          <div>
-            <strong>Admin</strong>
-          </div>
-        </div>
-
-        {/* Dashboard */}
         {activePage === "dashboard" && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: "20px",
-              padding: "20px",
-            }}
-          >
-            <div style={cardStyle}>
-              <h3>Total Students</h3>
-              <h1>{studentCount}</h1>
-            </div>
-
-            <div style={cardStyle}>
-              <h3>Total Teachers</h3>
-              <h1>{teacherCount}</h1>
-            </div>
-
-            <div style={cardStyle}>
-              <h3>Attendance</h3>
-              <h1>95%</h1>
-            </div>
-
-            <div style={cardStyle}>
-              <h3>Classes</h3>
-              <h1>12</h1>
-            </div>
+          <div style={{ padding: 20 }}>
+            <h1>Dashboard</h1>
+            <p>Students: {studentCount}</p>
+            <p>Teachers: {teacherCount}</p>
           </div>
         )}
 
-        {/* Students */}
         {activePage === "students" && (
-          <div style={{ padding: "20px" }}>
+          <div style={{ padding: 20 }}>
             <StudentSearch />
             <StudentsTable />
           </div>
         )}
 
-        {/* Teachers */}
         {activePage === "teachers" && (
-          <div style={{ padding: "20px" }}>
+          <div style={{ padding: 20 }}>
             <TeachersTable />
           </div>
         )}
 
-        {/* Attendance */}
         {activePage === "attendance" && (
-          <div style={{ padding: "20px" }}>
+          <div style={{ padding: 20 }}>
             <Attendance />
           </div>
         )}
 
-        {/* Reports */}
         {activePage === "reports" && (
-          <div style={{ padding: "20px" }}>
+          <div style={{ padding: 20 }}>
             <Reports />
           </div>
         )}
@@ -161,19 +133,5 @@ function App() {
     </div>
   );
 }
-
-const menuStyle = {
-  marginBottom: "20px",
-  cursor: "pointer",
-  padding: "10px",
-  borderRadius: "6px",
-};
-
-const cardStyle = {
-  background: "white",
-  padding: "20px",
-  borderRadius: "10px",
-  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
-};
 
 export default App;
