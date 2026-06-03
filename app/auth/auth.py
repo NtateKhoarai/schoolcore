@@ -34,7 +34,7 @@ def verify_password(plain_password, hashed_password):
     )
 
 # =========================
-# TOKEN FUNCTIONS
+# TOKEN FUNCTIONS (FIXED)
 # =========================
 
 def create_token(data: dict, expire_minutes: int = 60):
@@ -44,8 +44,9 @@ def create_token(data: dict, expire_minutes: int = 60):
         minutes=expire_minutes
     )
 
+    # FIX: MUST be UNIX timestamp
     to_encode.update({
-        "exp": expire
+        "exp": int(expire.timestamp())
     })
 
     return jwt.encode(
@@ -64,7 +65,6 @@ def verify_token(token: str):
         )
 
         print("TOKEN OK:", payload)
-
         return payload
 
     except JWTError as e:

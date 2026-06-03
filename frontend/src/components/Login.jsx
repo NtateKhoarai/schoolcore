@@ -15,15 +15,17 @@ function Login({ onLoginSuccess }) {
     try {
       const res = await loginUser({ username, password });
 
-      if (res.access_token) {
-        // 🔥 ENSURE CONSISTENT STATE
-        localStorage.setItem("token", res.access_token);
-        localStorage.setItem("role", res.role || "user");
-
-        onLoginSuccess();
-      } else {
-        setError("Login failed: No token received");
+      if (!res.access_token) {
+        setError("Login failed: no token received");
+        return;
       }
+
+      // IMPORTANT: token already stored inside loginUser()
+      if (res.role) {
+        localStorage.setItem("role", res.role);
+      }
+
+      onLoginSuccess();
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {

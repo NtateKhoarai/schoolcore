@@ -1,16 +1,19 @@
-from fastapi import APIRouter
-from app.database import SessionLocal
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+
+from app.database import SessionLocal, get_db
 from app.models.student import Student
 from app.schemas.student import StudentCreate
-from sqlalchemy.exc import IntegrityError
 
 router = APIRouter()
 
 
+# =========================
+# CREATE STUDENT
+# =========================
 @router.post("/students")
-def create_student(student: StudentCreate):
-
-    db = SessionLocal()
+def create_student(student: StudentCreate, db: Session = Depends(get_db)):
 
     new_student = Student(
         student_id=student.student_id,
@@ -26,35 +29,32 @@ def create_student(student: StudentCreate):
         db.add(new_student)
         db.commit()
 
-        return {
-            "message": "Student created successfully"
-        }
+        return {"message": "Student created successfully"}
 
     except IntegrityError:
         db.rollback()
-
-        return {
-            "error": "Student ID already exists"
-        }
+        return {"error": "Student ID already exists"}
 
 
+# =========================
+# GET ALL STUDENTS
+# =========================
 @router.get("/students")
-def get_students():
-
-    db = SessionLocal()
+def get_students(db: Session = Depends(get_db)):
 
     students = db.query(Student).all()
-
     return students
 
 
+# =========================
+# UPDATE STUDENT
+# =========================
 @router.put("/students/{student_id}")
 def update_student(
     student_id: str,
     updated_data: StudentCreate,
+    db: Session = Depends(get_db)
 ):
-
-    db = SessionLocal()
 
     student = db.query(Student).filter(
         Student.student_id == student_id
@@ -75,10 +75,11 @@ def update_student(
     return {"message": "Student updated successfully"}
 
 
+# =========================
+# DELETE STUDENT
+# =========================
 @router.delete("/students/{student_id}")
-def delete_student(student_id: str):
-
-    db = SessionLocal()
+def delete_student(student_id: str, db: Session = Depends(get_db)):
 
     student = db.query(Student).filter(
         Student.student_id == student_id

@@ -4,50 +4,66 @@ import StudentsTable from "./components/StudentsTable";
 import TeachersTable from "./components/TeachersTable";
 import Attendance from "./components/Attendance";
 import Reports from "./components/Reports";
-import { getAllStudents, getAllTeachers } from "./services/api";
+import Results from "./components/Results";
 import Login from "./components/Login";
 
+import {
+  getAllStudents,
+  getAllTeachers,
+} from "./services/api";
+
+const BASE_URL = "http://127.0.0.1:8000";
+
 function App() {
-  // ================= ALL HOOKS FIRST =================
   const [activePage, setActivePage] = useState("dashboard");
+
   const [studentCount, setStudentCount] = useState(0);
   const [teacherCount, setTeacherCount] = useState(0);
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
-  // check login on load
- useEffect(() => {
-  const token = localStorage.getItem("token");
+  const [role, setRole] = useState(null);
 
-  if (!token) {
-    setAuthChecked(true);
-    return;
-  }
+  // ================= AUTH CHECK =================
+  useEffect(() => {
+    async function checkAuth() {
+      const token = localStorage.getItem("token");
+      const storedRole = localStorage.getItem("role");
 
-  // decode expiry safely
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    const now = Math.floor(Date.now() / 1000);
+      if (!token) {
+        setIsLoggedIn(false);
+        setAuthChecked(true);
+        return;
+      }
 
-    if (payload.exp < now) {
-      // token expired → clear it
-      localStorage.removeItem("token");
-      localStorage.removeItem("role");
+      try {
+        const res = await fetch(`${BASE_URL}/teachers`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      setIsLoggedIn(false);
-    } else {
-      setIsLoggedIn(true);
+        if (!res.ok) {
+          throw new Error("Invalid token");
+        }
+
+        setRole(storedRole);
+        setIsLoggedIn(true);
+      } catch (err) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+
+        setIsLoggedIn(false);
+      }
+
+      setAuthChecked(true);
     }
-  } catch (e) {
-    localStorage.removeItem("token");
-    setIsLoggedIn(false);
-  }
 
-  setAuthChecked(true);
-}, []);
+    checkAuth();
+  }, []);
 
-  // load dashboard data AFTER login
+  // ================= DASHBOARD DATA =================
   useEffect(() => {
     if (!isLoggedIn) return;
 
@@ -57,49 +73,116 @@ function App() {
   async function loadDashboardData() {
     try {
       const students = await getAllStudents();
-      if (Array.isArray(students)) setStudentCount(students.length);
+
+      if (Array.isArray(students)) {
+        setStudentCount(students.length);
+      }
 
       const teachers = await getAllTeachers();
-      if (Array.isArray(teachers)) setTeacherCount(teachers.length);
-    } catch (error) {
-      console.error("Dashboard load failed:", error);
+
+      if (Array.isArray(teachers)) {
+        setTeacherCount(teachers.length);
+      }
+    } catch (err) {
+      console.error(err);
     }
   }
 
-  // ================= CONDITIONAL UI AFTER HOOKS =================
-
+  // ================= LOADING =================
   if (!authChecked) {
-    return <div style={{ padding: 40 }}>Loading...</div>;
+    return (
+      <div style={{ padding: 40 }}>
+        Checking authentication...
+      </div>
+    );
   }
 
+  // ================= LOGIN =================
   if (!isLoggedIn) {
     return (
       <Login
         onLoginSuccess={() => {
+          setRole(localStorage.getItem("role"));
           setIsLoggedIn(true);
         }}
       />
     );
   }
 
+  // ================= ROLE CONTROL =================
+  const isAdmin = role === "admin";
+  const isTeacher = role === "teacher";
+
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
-      {/* Sidebar */}
-      <div style={{ width: 240, backgroundColor: "#1e3a8a", color: "white", padding: 20 }}>
+      {/* SIDEBAR */}
+      <div
+        style={{
+          width: 240,
+          backgroundColor: "#1e3a8a",
+          color: "white",
+          padding: 20,
+        }}
+      >
         <h2>SchoolCore</h2>
 
-        <div onClick={() => setActivePage("dashboard")}>📊 Dashboard</div>
-        <div onClick={() => setActivePage("students")}>👨‍🎓 Students</div>
-        <div onClick={() => setActivePage("teachers")}>👩‍🏫 Teachers</div>
-        <div onClick={() => setActivePage("attendance")}>📅 Attendance</div>
-        <div onClick={() => setActivePage("reports")}>📑 Reports</div>
+        <div onClick={() => setActivePage("dashboard")}>
+          📊 Dashboard
+        </div>
+
+        {(isAdmin || isTeacher) && (
+          <div onClick={() => setActivePage("students")}>
+            👨‍🎓 Students
+          </div>
+        )}
+
+        {isAdmin && (
+          <div onClick={() => setActivePage("teachers")}>
+            👩‍🏫 Teachers
+          </div>
+        )}
+
+        <div onClick={() => setActivePage("attendance")}>
+          📅 Attendance
+        </div>
+
+        {(isAdmin || isTeacher) && (
+          <div onClick={() => setActivePage("results")}>
+            📝 Results
+          </div>
+        )}
+
+        {isAdmin && (
+          <div onClick={() => setActivePage("reports")}>
+            📑 Reports
+          </div>
+        )}
+
+        <button
+          onClick={() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("role");
+            setIsLoggedIn(false);
+          }}
+          style={{
+            marginTop: 20,
+            padding: 10,
+            background: "red",
+            color: "white",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          Logout
+        </button>
       </div>
 
-      {/* Main */}
+      {/* MAIN CONTENT */}
       <div style={{ flex: 1 }}>
         {activePage === "dashboard" && (
           <div style={{ padding: 20 }}>
             <h1>Dashboard</h1>
+            <p>Role: {role}</p>
             <p>Students: {studentCount}</p>
             <p>Teachers: {teacherCount}</p>
           </div>
@@ -112,7 +195,7 @@ function App() {
           </div>
         )}
 
-        {activePage === "teachers" && (
+        {activePage === "teachers" && isAdmin && (
           <div style={{ padding: 20 }}>
             <TeachersTable />
           </div>
@@ -124,7 +207,13 @@ function App() {
           </div>
         )}
 
-        {activePage === "reports" && (
+        {activePage === "results" && (
+          <div style={{ padding: 20 }}>
+            <Results />
+          </div>
+        )}
+
+        {activePage === "reports" && isAdmin && (
           <div style={{ padding: 20 }}>
             <Reports />
           </div>

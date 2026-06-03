@@ -5,13 +5,20 @@ export function getToken() {
   return localStorage.getItem("token");
 }
 
+/* ================= LOGOUT HELPERS ================= */
+function forceLogout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("role");
+  window.location.reload();
+}
+
 /* ================= HEADERS ================= */
 function authHeaders() {
   const token = getToken();
 
   return {
     "Content-Type": "application/json",
-    Authorization: token ? `Bearer ${token}` : "",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
 
@@ -19,7 +26,13 @@ function authHeaders() {
 async function handleResponse(res) {
   const data = await res.json().catch(() => null);
 
+  // 🔥 GLOBAL AUTH FAILURE HANDLING
   if (!res.ok) {
+    if (res.status === 401) {
+      console.log("401 Unauthorized → logging out user");
+      forceLogout();
+    }
+
     throw new Error(data?.detail || "Request failed");
   }
 
@@ -31,6 +44,7 @@ export async function getAllStudents() {
   const res = await fetch(`${BASE_URL}/students`, {
     headers: authHeaders(),
   });
+
   return handleResponse(res);
 }
 
@@ -45,6 +59,7 @@ export async function createStudent(data) {
     headers: authHeaders(),
     body: JSON.stringify(data),
   });
+
   return handleResponse(res);
 }
 
@@ -54,6 +69,7 @@ export async function updateStudent(id, data) {
     headers: authHeaders(),
     body: JSON.stringify(data),
   });
+
   return handleResponse(res);
 }
 
@@ -62,6 +78,7 @@ export async function deleteStudent(id) {
     method: "DELETE",
     headers: authHeaders(),
   });
+
   return handleResponse(res);
 }
 
@@ -70,7 +87,12 @@ export async function downloadStudentReport(id) {
     headers: authHeaders(),
   });
 
+  if (res.status === 401) {
+    forceLogout();
+  }
+
   if (!res.ok) throw new Error("Failed report download");
+
   return res.blob();
 }
 
@@ -144,6 +166,38 @@ export async function getAnalyticsOverview() {
 export async function getAllResults() {
   const res = await fetch(`${BASE_URL}/results`, {
     headers: authHeaders(),
+  });
+
+  return handleResponse(res);
+}
+
+export async function getStudentResults(studentId) {
+  const res = await fetch(
+    `${BASE_URL}/results/student/${studentId}`,
+    {
+      headers: authHeaders(),
+    }
+  );
+
+  return handleResponse(res);
+}
+
+export async function getStudentAverage(studentId) {
+  const res = await fetch(
+    `${BASE_URL}/results/student/${studentId}/average`,
+    {
+      headers: authHeaders(),
+    }
+  );
+
+  return handleResponse(res);
+}
+
+export async function createResults(data) {
+  const res = await fetch(`${BASE_URL}/results`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
   });
 
   return handleResponse(res);
