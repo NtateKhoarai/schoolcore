@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from app.database import Base
 
 class StudentCreate(BaseModel):
     student_id: str
